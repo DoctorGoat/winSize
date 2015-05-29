@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
@@ -22,11 +23,12 @@ namespace winSize
         }
 
         //Import functions MoveWindow and FindWindow from the Windows API
-        //TODO: Get window bounds so window doesn't move when resized
         [DllImport("user32.dll", SetLastError = true)]
         internal static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
         [DllImport("user32.dll", SetLastError = true)]
         static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+        [DllImport("user32.dll")]
+        private static extern bool GetWindowRect(IntPtr handle, out Rectangle rect);
 
         //Clear the item list. Then, get a list of processes and use the process.MainWindowTitle 
         //list to populate the window list. Select the first item.
@@ -69,8 +71,14 @@ namespace winSize
             {
                 if (xValue > 0 && yValue > 0)
                 {
+                    //Create new rectangle for the window size.
+                    //Use the left side of the rectangle's boundary for the X coordinate.
+                    //Use the top for the Y coordinate.
+                    //This allows the resizing of windows without movement.
+                    Rectangle windowSize = new Rectangle();
                     IntPtr thisWin = FindWindow(null, winList.Text);
-                    MoveWindow(thisWin, 0, 0, xValue, yValue, true);
+                    GetWindowRect(thisWin, out windowSize);
+                    MoveWindow(thisWin, windowSize.Left, windowSize.Top, xValue, yValue, true);
                 }
             }
             catch
